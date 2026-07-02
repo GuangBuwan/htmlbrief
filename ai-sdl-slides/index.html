@@ -1,0 +1,1073 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI 輔助自主學習與教育革新</title>
+  <style>
+    :root {
+      --ink: #111111;
+      --muted: #6b6b6b;
+      --line: #d6d6d6;
+      --paper: #fbfbf8;
+      --white: #ffffff;
+      --orange: #f37b21;
+      --orange-soft: #fff0e4;
+      --shadow: 0 18px 50px rgba(0, 0, 0, 0.12);
+      --slide-w: min(calc(100vw - 32px), calc((100vh - 32px) * 16 / 9));
+      --slide-h: min(calc(100vh - 32px), calc((100vw - 32px) * 9 / 16));
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: #e8e8e4;
+      color: var(--ink);
+      font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", system-ui, sans-serif;
+    }
+
+    body {
+      overflow: hidden;
+    }
+
+    .deck {
+      width: 100vw;
+      height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+    }
+
+    .slide {
+      position: relative;
+      display: none;
+      width: var(--slide-w);
+      height: var(--slide-h);
+      aspect-ratio: 16 / 9;
+      background: var(--paper);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      padding: clamp(28px, 4.1vw, 56px);
+    }
+
+    .slide.active {
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: clamp(12px, 1.6vw, 22px);
+    }
+
+    .slide::before {
+      content: "";
+      position: absolute;
+      inset: clamp(12px, 1.4vw, 22px);
+      border: 1px solid #ececea;
+      pointer-events: none;
+    }
+
+    .topline,
+    .footer {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .identity {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .page-number {
+      display: grid;
+      place-items: center;
+      width: clamp(38px, 4.4vw, 54px);
+      height: clamp(38px, 4.4vw, 54px);
+      background: var(--ink);
+      color: var(--white);
+      font-weight: 900;
+      font-size: clamp(16px, 1.8vw, 22px);
+      letter-spacing: 0;
+    }
+
+    .course {
+      display: grid;
+      gap: 7px;
+      min-width: 0;
+      color: #242424;
+      font-size: clamp(13px, 1.35vw, 17px);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .course::after {
+      content: "";
+      width: clamp(48px, 7vw, 86px);
+      height: 4px;
+      background: var(--orange);
+    }
+
+    .section-tag {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 7px 13px;
+      background: var(--white);
+      color: var(--muted);
+      font-size: clamp(12px, 1.05vw, 14px);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    h1 {
+      position: relative;
+      z-index: 2;
+      max-width: 920px;
+      margin: 0 auto;
+      text-align: center;
+      font-size: clamp(34px, 5.1vw, 76px);
+      line-height: 1.08;
+      letter-spacing: 0;
+      font-weight: 950;
+    }
+
+    .visual {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      align-items: center;
+      min-height: 0;
+    }
+
+    .takeaway {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      min-height: clamp(52px, 6vw, 72px);
+      border: 2px solid var(--ink);
+      background: var(--white);
+      padding: 12px clamp(16px, 2.2vw, 28px);
+      font-size: clamp(15px, 1.65vw, 22px);
+      font-weight: 800;
+      line-height: 1.3;
+    }
+
+    .takeaway::before {
+      content: "";
+      flex: 0 0 clamp(24px, 3vw, 34px);
+      height: clamp(24px, 3vw, 34px);
+      margin-right: 13px;
+      border: 3px solid var(--orange);
+      border-radius: 50% 50% 45% 45%;
+      background:
+        linear-gradient(var(--orange), var(--orange)) center 70% / 13px 3px no-repeat,
+        var(--orange-soft);
+    }
+
+    .footer {
+      color: var(--muted);
+      font-size: clamp(12px, 1.15vw, 15px);
+      font-weight: 800;
+    }
+
+    .progress {
+      width: min(48%, 360px);
+      height: 5px;
+      background: #dededb;
+    }
+
+    .progress span {
+      display: block;
+      height: 100%;
+      width: var(--progress);
+      background: var(--orange);
+    }
+
+    .count {
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    .controls {
+      position: fixed;
+      right: 22px;
+      bottom: 22px;
+      z-index: 10;
+      display: flex;
+      gap: 8px;
+    }
+
+    .controls button {
+      width: 44px;
+      height: 44px;
+      border: 1px solid rgba(0, 0, 0, 0.18);
+      background: rgba(255, 255, 255, 0.86);
+      color: var(--ink);
+      font-size: 26px;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .controls button:hover,
+    .controls button:focus-visible {
+      border-color: var(--orange);
+      outline: 3px solid rgba(243, 123, 33, 0.22);
+    }
+
+    .node,
+    .pill,
+    .step,
+    .risk,
+    .check,
+    .principle,
+    .role-box,
+    .age-band {
+      border: 2px solid var(--ink);
+      background: var(--white);
+      font-weight: 850;
+      line-height: 1.25;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: clamp(13px, 1.25vw, 17px);
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .orange {
+      color: var(--orange);
+    }
+
+    .marker {
+      display: inline-grid;
+      place-items: center;
+      width: clamp(30px, 3.2vw, 40px);
+      height: clamp(30px, 3.2vw, 40px);
+      border-radius: 50%;
+      background: var(--orange);
+      color: var(--white);
+      font-weight: 950;
+    }
+
+    .triangle-map {
+      position: relative;
+      width: min(82%, 760px);
+      height: min(100%, 330px);
+      margin: 0 auto;
+    }
+
+    .triangle-map::before {
+      content: "";
+      position: absolute;
+      inset: 12% 13% 12% 13%;
+      border-left: 4px solid var(--ink);
+      border-bottom: 4px solid var(--ink);
+      transform: skewX(-28deg);
+    }
+
+    .triangle-map .node {
+      position: absolute;
+      width: clamp(128px, 17vw, 190px);
+      padding: 18px 14px;
+      text-align: center;
+      font-size: clamp(18px, 2vw, 28px);
+    }
+
+    .triangle-map .student {
+      left: 50%;
+      top: 2%;
+      transform: translateX(-50%);
+      border-color: var(--orange);
+      box-shadow: 8px 8px 0 var(--orange-soft);
+    }
+
+    .triangle-map .teacher {
+      left: 5%;
+      bottom: 0;
+    }
+
+    .triangle-map .ai {
+      right: 5%;
+      bottom: 0;
+    }
+
+    .center-note {
+      position: absolute;
+      left: 50%;
+      top: 56%;
+      transform: translate(-50%, -50%);
+      width: clamp(140px, 18vw, 220px);
+      padding: 12px;
+      border: 2px dashed var(--orange);
+      background: var(--paper);
+      text-align: center;
+      color: var(--orange);
+      font-size: clamp(15px, 1.45vw, 20px);
+      font-weight: 900;
+    }
+
+    .radial {
+      position: relative;
+      width: min(88%, 840px);
+      height: min(100%, 360px);
+      margin: 0 auto;
+    }
+
+    .radial .core {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      display: grid;
+      place-items: center;
+      width: clamp(124px, 15vw, 174px);
+      height: clamp(124px, 15vw, 174px);
+      border: 4px solid var(--orange);
+      border-radius: 50%;
+      background: var(--white);
+      transform: translate(-50%, -50%);
+      font-size: clamp(20px, 2.2vw, 30px);
+      font-weight: 950;
+    }
+
+    .radial .pill {
+      position: absolute;
+      width: clamp(132px, 17vw, 190px);
+      padding: 13px 12px;
+      text-align: center;
+      font-size: clamp(15px, 1.5vw, 21px);
+    }
+
+    .radial .pill::before {
+      content: "";
+      position: absolute;
+      width: 54px;
+      height: 3px;
+      background: var(--line);
+      top: 50%;
+    }
+
+    .radial .p1 { left: 50%; top: 0; transform: translateX(-50%); }
+    .radial .p2 { right: 0; top: 28%; }
+    .radial .p3 { right: 8%; bottom: 0; }
+    .radial .p4 { left: 8%; bottom: 0; }
+    .radial .p5 { left: 0; top: 28%; }
+    .radial .p1::before { left: 50%; top: 100%; width: 3px; height: 42px; }
+    .radial .p2::before,
+    .radial .p3::before { right: 100%; }
+    .radial .p4::before,
+    .radial .p5::before { left: 100%; }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: clamp(16px, 2vw, 30px);
+      align-items: center;
+      width: min(92%, 920px);
+      margin: 0 auto;
+    }
+
+    .flow .step {
+      position: relative;
+      min-height: clamp(110px, 14vw, 150px);
+      padding: 18px 14px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-size: clamp(18px, 2vw, 28px);
+      box-shadow: 7px 7px 0 #ededeb;
+    }
+
+    .flow .step:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      right: calc(clamp(16px, 2vw, 30px) * -1 + 3px);
+      top: 50%;
+      width: clamp(18px, 2.4vw, 32px);
+      height: 4px;
+      background: var(--orange);
+      transform: translateY(-50%);
+    }
+
+    .flow .step:not(:last-child)::before {
+      content: "";
+      position: absolute;
+      right: calc(clamp(16px, 2vw, 30px) * -1 - 2px);
+      top: 50%;
+      border-left: 11px solid var(--orange);
+      border-top: 7px solid transparent;
+      border-bottom: 7px solid transparent;
+      transform: translateY(-50%);
+    }
+
+    .matrix {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: clamp(14px, 1.8vw, 24px);
+      width: min(88%, 820px);
+      margin: 0 auto;
+    }
+
+    .matrix .node {
+      min-height: clamp(90px, 11vw, 128px);
+      padding: 16px;
+      display: grid;
+      align-content: center;
+      gap: 8px;
+      font-size: clamp(19px, 2vw, 28px);
+    }
+
+    .matrix .node strong {
+      color: var(--orange);
+      font-size: 1.18em;
+    }
+
+    .contrast {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: stretch;
+      gap: clamp(16px, 2.2vw, 34px);
+      width: min(90%, 920px);
+      margin: 0 auto;
+    }
+
+    .contrast .node {
+      padding: clamp(18px, 2.4vw, 30px);
+      display: grid;
+      gap: 12px;
+      align-content: center;
+      text-align: center;
+      font-size: clamp(20px, 2.3vw, 32px);
+    }
+
+    .contrast .node:first-child {
+      border-color: var(--orange);
+      background: var(--orange-soft);
+    }
+
+    .contrast .arrow {
+      align-self: center;
+      color: var(--orange);
+      font-size: clamp(38px, 5vw, 70px);
+      font-weight: 950;
+    }
+
+    .roles {
+      display: grid;
+      grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+      gap: clamp(18px, 2.4vw, 34px);
+      width: min(91%, 900px);
+      margin: 0 auto;
+      align-items: center;
+    }
+
+    .role-box {
+      min-height: clamp(150px, 17vw, 210px);
+      display: grid;
+      place-items: center;
+      padding: 22px;
+      text-align: center;
+      font-size: clamp(24px, 3vw, 42px);
+    }
+
+    .role-box.new {
+      border-color: var(--orange);
+      box-shadow: 10px 10px 0 var(--orange-soft);
+    }
+
+    .role-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .role-list .pill {
+      padding: 13px 16px;
+      font-size: clamp(16px, 1.6vw, 23px);
+    }
+
+    .balance {
+      position: relative;
+      width: min(88%, 840px);
+      height: min(100%, 330px);
+      margin: 0 auto;
+    }
+
+    .balance .bar {
+      position: absolute;
+      left: 18%;
+      right: 18%;
+      top: 42%;
+      height: 6px;
+      background: var(--ink);
+      transform: rotate(-4deg);
+      transform-origin: center;
+    }
+
+    .balance .stand {
+      position: absolute;
+      left: 50%;
+      top: 43%;
+      width: 6px;
+      height: 42%;
+      background: var(--ink);
+      transform: translateX(-50%);
+    }
+
+    .balance .plate {
+      position: absolute;
+      width: clamp(190px, 25vw, 270px);
+      min-height: clamp(104px, 12vw, 140px);
+      padding: 18px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-size: clamp(20px, 2.25vw, 31px);
+    }
+
+    .balance .left {
+      left: 3%;
+      top: 12%;
+      border-color: var(--orange);
+      background: var(--orange-soft);
+    }
+
+    .balance .right {
+      right: 3%;
+      bottom: 5%;
+    }
+
+    .risk-map {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: clamp(10px, 1.2vw, 16px);
+      width: min(94%, 980px);
+      margin: 0 auto;
+    }
+
+    .risk {
+      min-height: clamp(132px, 15vw, 178px);
+      padding: 14px 10px;
+      display: grid;
+      align-content: center;
+      gap: 10px;
+      text-align: center;
+      font-size: clamp(15px, 1.55vw, 22px);
+    }
+
+    .risk .marker {
+      margin: 0 auto;
+    }
+
+    .age-layers {
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: clamp(16px, 2.1vw, 32px);
+      width: min(90%, 920px);
+      margin: 0 auto;
+      align-items: center;
+    }
+
+    .age-band {
+      padding: clamp(18px, 2.2vw, 28px);
+      font-size: clamp(19px, 2vw, 28px);
+      display: grid;
+      gap: 8px;
+    }
+
+    .age-band.primary {
+      border-color: var(--orange);
+      background: var(--orange-soft);
+    }
+
+    .age-stack {
+      display: grid;
+      gap: 16px;
+    }
+
+    .teacher-loop {
+      border: 3px dashed var(--orange);
+      padding: 26px;
+      text-align: center;
+      font-size: clamp(22px, 2.7vw, 38px);
+      font-weight: 950;
+      background: var(--white);
+    }
+
+    .checks {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: clamp(14px, 1.8vw, 24px);
+      width: min(88%, 860px);
+      margin: 0 auto;
+    }
+
+    .check {
+      position: relative;
+      min-height: clamp(92px, 10vw, 124px);
+      padding: 18px 18px 18px clamp(52px, 5.7vw, 72px);
+      display: grid;
+      align-content: center;
+      font-size: clamp(18px, 1.9vw, 27px);
+    }
+
+    .check::before {
+      content: "✓";
+      position: absolute;
+      left: 17px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--orange);
+      font-size: clamp(28px, 3.4vw, 46px);
+      font-weight: 950;
+    }
+
+    .principles {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: clamp(14px, 2vw, 28px);
+      width: min(88%, 900px);
+      margin: 0 auto;
+      align-items: stretch;
+    }
+
+    .principle {
+      min-height: clamp(152px, 18vw, 220px);
+      padding: clamp(18px, 2.2vw, 28px);
+      display: grid;
+      align-content: center;
+      gap: 12px;
+      text-align: center;
+      font-size: clamp(24px, 2.7vw, 38px);
+    }
+
+    .principle:nth-child(2) {
+      border-color: var(--orange);
+      box-shadow: 9px 9px 0 var(--orange-soft);
+    }
+
+    @media (max-width: 760px) {
+      body {
+        overflow: auto;
+      }
+
+      .deck {
+        width: 100%;
+        min-height: 100vh;
+        height: auto;
+        padding: 0;
+      }
+
+      .slide {
+        width: 100%;
+        min-height: 100vh;
+        height: auto;
+        aspect-ratio: auto;
+        box-shadow: none;
+        padding: 24px 18px;
+      }
+
+      .slide.active {
+        gap: 16px;
+      }
+
+      .section-tag {
+        display: none;
+      }
+
+      h1 {
+        font-size: clamp(30px, 11vw, 48px);
+      }
+
+      .triangle-map,
+      .radial,
+      .balance {
+        width: 100%;
+        height: auto;
+        display: grid;
+        gap: 12px;
+      }
+
+      .triangle-map::before,
+      .radial .pill::before,
+      .balance .bar,
+      .balance .stand,
+      .center-note {
+        display: none;
+      }
+
+      .triangle-map .node,
+      .radial .core,
+      .radial .pill,
+      .balance .plate {
+        position: static;
+        transform: none;
+        width: 100%;
+        min-height: auto;
+      }
+
+      .flow,
+      .matrix,
+      .contrast,
+      .roles,
+      .risk-map,
+      .age-layers,
+      .checks,
+      .principles {
+        width: 100%;
+        grid-template-columns: 1fr;
+      }
+
+      .flow .step:not(:last-child)::before,
+      .flow .step:not(:last-child)::after,
+      .contrast .arrow {
+        display: none;
+      }
+
+      .controls {
+        right: 12px;
+        top: 12px;
+        bottom: auto;
+      }
+    }
+
+    @media print {
+      body {
+        background: var(--white);
+        overflow: visible;
+      }
+
+      .deck {
+        display: block;
+        width: auto;
+        height: auto;
+        padding: 0;
+      }
+
+      .slide,
+      .slide.active {
+        display: grid;
+        width: 100vw;
+        height: 56.25vw;
+        box-shadow: none;
+        break-after: page;
+      }
+
+      .controls {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="deck" aria-live="polite">
+    <section class="slide active" data-title="AI 不是替代教師，而是改變學習關係">
+      <div class="topline">
+        <div class="identity">
+          <div class="page-number">01</div>
+          <div class="course">AI 輔助自主學習</div>
+        </div>
+        <div class="section-tag">問題開場</div>
+      </div>
+      <h1>AI 不是替代教師，而是改變學習關係</h1>
+      <div class="visual">
+        <div class="triangle-map" aria-label="學生、教師與 AI 的關係圖">
+          <div class="node student">學生<br><span class="small">主導學習</span></div>
+          <div class="node teacher">教師<br><span class="small">判斷與引導</span></div>
+          <div class="node ai">AI<br><span class="small">回饋與支援</span></div>
+          <div class="center-note">誰在主導？</div>
+        </div>
+      </div>
+      <div class="takeaway">關鍵不是用不用 AI，而是誰在主導學習。</div>
+      <div class="footer"><div class="progress"><span></span></div><div class="count">1 / 11</div></div>
+    </section>
+
+    <section class="slide" data-title="數位教學進入 AI 轉型期">
+      <div class="topline">
+        <div class="identity">
+          <div class="page-number">02</div>
+          <div class="course">政策趨勢與願景</div>
+        </div>
+        <div class="section-tag">政策願景</div>
+      </div>
+      <h1>數位教學進入 AI 轉型期</h1>
+      <div class="visual">
+        <div class="radial" aria-label="五項政策願景">
+          <div class="core">AI<br>轉型</div>
+          <div class="pill p1">平權</div>
+          <div class="pill p2">適性</div>
+          <div class="pill p3">素養</div>
+          <div class="pill p4">創新</div>
+          <div class="pill p5">協作</div>
+        </div>
+      </div>
+      <div class="takeaway">AI 教育不能只談工具，也要談公平與素養。</div>
+      <div class="footer"><div class="progress"><span></span></div><div class="count">2 / 11</div></div>
+    </section>
+
+    <section class="slide" data-title="自主學習需要四個環節">
+      <div class="topline">
+        <div class="identity">
+          <div class="page-number">03</div>
+          <div class="course">自主學習歷程</div>
+        </div>
+        <div class="section-tag">流程</div>
+      </div>
+      <h1>自主學習需要四個環節</h1>
+      <div class="visual">
+        <div class="flow" aria-label="自主學習四步驟">
+          <div class="step"><span class="marker">1</span>構思</div>
+          <div class="step"><span class="marker">2</span>設計</div>
+          <div class="step"><span class="marker">3</span>執行</div>
+          <div class="step"><span class="marker">4</span>評估</div>
+        </div>
+      </div>
+      <div class="takeaway">AI 應支援學習循環，而不是接管循環。</div>
+      <div class="footer"><div class="progress"><span></span></div><div class="count">3 / 11</div></div>
+    </section>
+
+    <section class="slide" data-title="AI 可以放進四學策略">
+      <div class="topline">
+        <div class="identity">
+          <div class="page-number">04</div>
+          <div class="course">四學策略</div>
+        </div>
+        <div class="section-tag">矩陣</div>
+      </div>
+      <h1>AI 可以放進四學策略</h1>
+      <div class="visual">
+        <div class="matrix" aria-label="自學共學互學導學矩陣">
+          <div class="node"><strong>自學</strong><span class="small">提問、摘要、查缺補漏</span></div>
+          <div class="node"><strong>共學</strong><span class="small">共同整理觀點與證據</span></div>
+          <div class="node"><strong>互學</strong><span class="small">同儕回饋與修正</span></div>
+          <div class="node"><strong>導學</strong><span class="small">教師設規準、控風險</span></div>
+        </div>
+      </div>
+      <div class="takeaway">好的 AI 使用，要嵌入教學策略。</div>
+      <div class="footer"><div class="progress"><span></span></div><div class="count">4 / 11</div></div>
+    </section>
+
+    <section class="slide" data-title="個人化支援帶來即時回饋">
+      <div class="topline">
+        <div class="identity">
+          <div class="page-number">05</div>
+          <div class="course">個人化與適性化</div>
+        </div>
+        <div class="section-tag">對比</div>
+      </div>
+      <h1>個人化支援帶來即時回饋</h1>
+      <div class="visual">
+        <div class="contrast" aria-label="回饋與代做的差異">
+          <div class="node">即時回饋<br><span class="small">指出下一步</span></div>
+          <div class="arrow">→</div>
+          <div class="node">不是代做<br><span class="small">不替學生完成</span></div>
+        </div>
+      </div>
+      <div class="takeaway">個人化不是幫學生完成，而是幫學生看見下一步。</div>
+      <div class="footer"><div class="progress"><span></span></div><div class="count">5 / 11</div></div>
+    </section>
+
+    <section class="slide" data-title="教師角色從權威轉為引導">
+      <div class="topline">
+        <div class="identity">
+          <div class="page-number">06</div>
+          <div class="course">教師角色轉型</div>
+        </div>
+        <div class="section-tag">角色轉換</div>
+      </div>
+      <h1>教師角色從權威轉為引導</h1>
+      <div class="visual">
+        <div class="roles" aria-label="教師從權威轉為引導者">
+          <div class="role-box new">引導者<br><span class="small">不是唯一知識來源</span></div>
+          <div class="role-list">
+            <div class="pill">設定學習目標</div>
+            <div class="pill">定位可信資源</div>
+            <div class="pill">建立評估規準</div>
+            <div class="pill">監管 AI 使用</div>
+          </div>
+        </div>
+      </div>
+      <div class="takeaway">AI 越強，教師的判斷與引導越重要。</div>
+      <div class="footer"><div class="progress"><span></span></div><div class="count">6 / 11</div></div>
+    </section>
+
+    <section class="slide" data-title="短期有效，不代表長期學會">
+      <div class="topline">
+        <div class="identity">
+          <div class="page-number">07</div>
+          <div class="course">研究發現與挑戰</div>
+        </div>
+        <div class="section-tag">天平</div>
+      </div>
+      <h1>短期有效，不代表長期學會</h1>
+      <div class="visual">
+        <div class="balance" aria-label="短期效益與長期依賴的天平">
+          <div class="bar"></div>
+          <div class="stand"></div>
+          <div class="node plate left">短期效益<br><span class="small">表現快速提升</span></div>
+          <div class="node plate right">長期依賴<br><span class="small">離開 AI 就下降</span></div>
+        </div>
+      </div>
+      <div class="takeaway">不能只看有沒有做對，也要看離開 AI 後會不會做。</div>
+      <div class="footer"><div class="progress"><span></span></div><div class="count">7 / 11</div></div>
+    </section>
+
+    <section class="slide" data-title="風險不是附錄，而是設計條件">
+      <div class="topline">
+        <div class="identity">
+          <div class="page-number">08</div>
+          <div class="course">風險與警示</div>
+        </div>
+        <div class="section-tag">風險地圖</div>
+      </div>
+      <h1>風險不是附錄，而是設計條件</h1>
+      <div class="visual">
+        <div class="risk-map" aria-label="五項 AI 應用風險">
+          <div class="risk"><span class="marker">1</span>錯誤資訊</div>
+          <div class="risk"><span class="marker">2</span>過度依賴</div>
+          <div class="risk"><span class="marker">3</span>文化偏見</div>
+          <div class="risk"><span class="marker">4</span>倫理版權</div>
+          <div class="risk"><span class="marker">5</span>品質單調</div>
+        </div>
+      </div>
+      <div class="takeaway">把風險先放進設計，才不會事後補破網。</div>
+      <div class="footer"><div class="progress"><span></span></div><div class="count">8 / 11</div></div>
+    </section>
+
+    <section class="slide" data-title="不同年齡，需要不同開放程度">
+      <div class="topline">
+        <div class="identity">
+          <div class="page-number">09</div>
+          <div class="course">中小學應用指引</div>
+        </div>
+        <div class="section-tag">分層</div>
+      </div>
+      <h1>不同年齡，需要不同開放程度</h1>
+      <div class="visual">
+        <div class="age-layers" aria-label="年齡分層與監督原則">
+          <div class="age-stack">
+            <div class="age-band primary">13 歲以下<br><span class="small">避免直接使用開放式 GenAI</span></div>
+            <div class="age-band">13-18 歲<br><span class="small">可在教師或家長監督下使用</span></div>
+          </div>
+          <div class="teacher-loop">教師監督<br><span class="small">平臺選擇、規範、回饋、查證</span></div>
+        </div>
+      </div>
+      <div class="takeaway">越開放的工具，越需要清楚的年齡與監督規則。</div>
+      <div class="footer"><div class="progress"><span></span></div><div class="count">9 / 11</div></div>
+    </section>
+
+    <section class="slide" data-title="學生必須對作品負責">
+      <div class="topline">
+        <div class="identity">
+          <div class="page-number">10</div>
+          <div class="course">倫理與批判識讀</div>
+        </div>
+        <div class="section-tag">檢核表</div>
+      </div>
+      <h1>學生必須對作品負責</h1>
+      <div class="visual">
+        <div class="checks" aria-label="AI 使用責任檢核表">
+          <div class="check">標明 AI 來源</div>
+          <div class="check">多方比對內容</div>
+          <div class="check">檢查邏輯一致</div>
+          <div class="check">確認版權與個資</div>
+        </div>
+      </div>
+      <div class="takeaway">AI 可以協助產出，但責任仍在使用者。</div>
+      <div class="footer"><div class="progress"><span></span></div><div class="count">10 / 11</div></div>
+    </section>
+
+    <section class="slide" data-title="以人為本，才是教育革新的底線">
+      <div class="topline">
+        <div class="identity">
+          <div class="page-number">11</div>
+          <div class="course">結論與未來方向</div>
+        </div>
+        <div class="section-tag">三原則</div>
+      </div>
+      <h1>以人為本，才是教育革新的底線</h1>
+      <div class="visual">
+        <div class="principles" aria-label="AI 教育三個決策原則">
+          <div class="principle"><span class="marker">1</span>效能</div>
+          <div class="principle"><span class="marker">2</span>公平</div>
+          <div class="principle"><span class="marker">3</span>倫理</div>
+        </div>
+      </div>
+      <div class="takeaway">成功的 AI 教育，是科技能力與人本價值的平衡。</div>
+      <div class="footer"><div class="progress"><span></span></div><div class="count">11 / 11</div></div>
+    </section>
+  </main>
+
+  <div class="controls" aria-label="投影片控制">
+    <button type="button" id="prevSlide" aria-label="上一頁">‹</button>
+    <button type="button" id="nextSlide" aria-label="下一頁">›</button>
+  </div>
+
+  <script>
+    const slides = Array.from(document.querySelectorAll(".slide"));
+    const progress = document.querySelectorAll(".progress span");
+    let current = 0;
+
+    function clampSlide(index) {
+      return Math.max(0, Math.min(slides.length - 1, index));
+    }
+
+    function showSlide(index, updateHash = true) {
+      current = clampSlide(index);
+      slides.forEach((slide, slideIndex) => {
+        slide.classList.toggle("active", slideIndex === current);
+      });
+      const ratio = `${((current + 1) / slides.length) * 100}%`;
+      progress.forEach((bar) => {
+        bar.style.setProperty("--progress", ratio);
+      });
+      document.title = `${String(current + 1).padStart(2, "0")} | ${slides[current].dataset.title}`;
+      if (updateHash) {
+        history.replaceState(null, "", `#${current + 1}`);
+      }
+    }
+
+    document.getElementById("prevSlide").addEventListener("click", () => showSlide(current - 1));
+    document.getElementById("nextSlide").addEventListener("click", () => showSlide(current + 1));
+
+    window.addEventListener("keydown", (event) => {
+      const forwardKeys = ["ArrowRight", "PageDown", " ", "Enter"];
+      const backKeys = ["ArrowLeft", "PageUp", "Backspace"];
+      if (forwardKeys.includes(event.key)) {
+        event.preventDefault();
+        showSlide(current + 1);
+      }
+      if (backKeys.includes(event.key)) {
+        event.preventDefault();
+        showSlide(current - 1);
+      }
+      if (event.key === "Home") {
+        event.preventDefault();
+        showSlide(0);
+      }
+      if (event.key === "End") {
+        event.preventDefault();
+        showSlide(slides.length - 1);
+      }
+    });
+
+    window.addEventListener("hashchange", () => {
+      const requested = Number(window.location.hash.replace("#", ""));
+      if (Number.isFinite(requested)) {
+        showSlide(requested - 1, false);
+      }
+    });
+
+    const initial = Number(window.location.hash.replace("#", ""));
+    showSlide(Number.isFinite(initial) && initial > 0 ? initial - 1 : 0, false);
+  </script>
+</body>
+</html>
